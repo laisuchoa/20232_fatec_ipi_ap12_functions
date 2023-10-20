@@ -86,10 +86,39 @@ $$
 
 -- 1.1 Escreva a seguinte função: nome: fn_consultar_saldo; recebe: código de cliente, código de conta; devolve: o saldo da conta especificada.
 
-
+CREATE OR REPLACE FUNCTION fn_consultar_saldo(IN p_cod_cliente INT, IN p_cod_conta INT) RETURNS NUMERIC(10, 2)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_saldo NUMERIC(10, 2);
+BEGIN
+    SELECT saldo INTO v_saldo FROM tb_conta WHERE cod_cliente = p_cod_cliente AND cod_conta = p_cod_conta;
+    IF FOUND THEN
+        RETURN v_saldo;
+    ELSE
+        RETURN NULL;
+    END IF;
+END;
+$$;
 
 -- 1.2 Escreva a seguinte função: nome: fn_transferir; recebe: código de cliente remetente, código de conta remetente, código de cliente, destinatário, código de conta destinatário, valor da transferência; devolve: um booleano que indica se a transferência ocorreu ou não. Uma transferência somente pode acontecer se nenhuma conta envolvida ficar no negativo.
 
 
 
 -- 1.3 Escreva blocos anônimos para testar cada função.
+
+-- 1.1:
+DO $$
+DECLARE
+    v_cod_cliente INT := 1;
+    v_cod_conta INT := 2;
+    v_saldo NUMERIC(10, 2);
+BEGIN
+    SELECT fn_consultar_saldo(v_cod_cliente, v_cod_conta) INTO v_saldo;
+    IF v_saldo IS NOT NULL THEN
+        RAISE NOTICE 'cliente: % - conta: % - saldo: R$%', v_cod_cliente, v_cod_conta, v_saldo;
+    ELSE
+        RAISE NOTICE 'cliente: % - conta: % - conta não encontrada', v_cod_cliente, v_cod_conta;
+    END IF;
+END;
+$$;
