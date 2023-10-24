@@ -103,7 +103,36 @@ $$;
 
 -- 1.2 Escreva a seguinte função: nome: fn_transferir; recebe: código de cliente remetente, código de conta remetente, código de cliente, destinatário, código de conta destinatário, valor da transferência; devolve: um booleano que indica se a transferência ocorreu ou não. Uma transferência somente pode acontecer se nenhuma conta envolvida ficar no negativo.
 
-
+CREATE OR REPLACE FUNCTION fn_transferir(
+    IN p_cod_cliente_remetente INT,
+    IN p_cod_conta_remetente INT,
+    IN p_cod_cliente_destinatario INT,
+    IN p_cod_conta_destinatario INT,
+    IN p_valor_transferencia NUMERIC(10, 2)
+) RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_saldo_remetente NUMERIC(10, 2);
+    v_saldo_destinatario NUMERIC(10, 2);
+BEGIN
+    SELECT saldo INTO v_saldo_remetente FROM tb_conta
+	WHERE cod_cliente = p_cod_cliente_remetente AND cod_conta = p_cod_conta_remetente;
+    SELECT saldo INTO v_saldo_destinatario FROM tb_conta
+	WHERE cod_cliente = p_cod_cliente_destinatario AND cod_conta = p_cod_conta_destinatario;
+	IF
+	 	v_saldo_remetente >= p_valor_transferencia AND v_saldo_destinatario + p_valor_transferencia >= 0
+	THEN
+		UPDATE tb_conta SET saldo = saldo - p_valor_transferencia
+		WHERE cod_cliente = p_cod_cliente_remetente AND cod_conta = p_cod_conta_remetente;
+        UPDATE tb_conta SET saldo = saldo + p_valor_transferencia
+        WHERE cod_cliente = p_cod_cliente_destinatario AND cod_conta = p_cod_conta_destinatario;
+        RETURN TRUE;
+    ELSE
+        RETURN FALSE;
+    END IF;
+END;
+$$;
 
 -- 1.3 Escreva blocos anônimos para testar cada função.
 
@@ -122,3 +151,4 @@ BEGIN
     END IF;
 END;
 $$;
+
