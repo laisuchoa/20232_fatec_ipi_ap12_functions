@@ -152,3 +152,50 @@ BEGIN
 END;
 $$;
 
+-- 1.2:
+-- criando outra conta pra testar
+DO $$
+DECLARE
+	v_cod_cliente INT := 2;
+	v_saldo NUMERIC (10, 2) := 1000;
+	v_cod_tipo_conta INT := 1;
+	v_resultado BOOLEAN;
+BEGIN
+SELECT fn_abrir_conta (v_cod_cliente, v_saldo, v_cod_tipo_conta) INTO v_resultado;
+	RAISE NOTICE '%', format('Conta com saldo R$%s%s foi aberta', v_saldo, CASE WHEN v_resultado THEN '' ELSE ' não' END);
+	v_saldo := 1000;
+	SELECT fn_abrir_conta (v_cod_cliente, v_saldo, v_cod_tipo_conta) INTO v_resultado;
+	RAISE NOTICE '%', format('Conta com saldo R$%s%s foi aberta', v_saldo, CASE WHEN v_resultado THEN '' ELSE ' não' END);
+END;
+$$
+-- testando fn_transferir
+DO $$
+DECLARE
+    v_cod_cliente_remetente INT := 1;
+    v_cod_conta_remetente INT := 2;
+    v_cod_cliente_destinatario INT := 2;
+    v_cod_conta_destinatario INT := 3;
+    v_valor_transferencia NUMERIC(10, 2) := 100;
+    v_saldo_remetente NUMERIC(10, 2);
+    v_saldo_destinatario NUMERIC(10, 2);
+	v_resultado BOOLEAN;
+BEGIN
+    SELECT fn_transferir(
+        v_cod_cliente_remetente,
+        v_cod_conta_remetente,
+        v_cod_cliente_destinatario,
+        v_cod_conta_destinatario,
+        v_valor_transferencia
+    ) INTO v_resultado;
+
+    IF v_resultado THEN
+        SELECT saldo INTO v_saldo_remetente FROM tb_conta WHERE cod_cliente = v_cod_cliente_remetente AND cod_conta = v_cod_conta_remetente;
+        SELECT saldo INTO v_saldo_destinatario FROM tb_conta WHERE cod_cliente = v_cod_cliente_destinatario AND cod_conta = v_cod_conta_destinatario;
+        RAISE NOTICE 'Transferência de R$%s realizada', v_valor_transferencia;
+        RAISE NOTICE 'Novo saldo do remetente (cliente %, conta %): R$%', v_cod_cliente_remetente, v_cod_conta_remetente, v_saldo_remetente;
+        RAISE NOTICE 'Novo saldo do destinatário (cliente %, conta %): R$%', v_cod_cliente_destinatario, v_cod_conta_destinatario, v_saldo_destinatario;
+    ELSE
+        RAISE NOTICE 'Transferência de R$%s não realizada', v_valor_transferencia;
+    END IF;
+END;
+$$;
